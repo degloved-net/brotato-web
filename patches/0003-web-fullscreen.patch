@@ -1,0 +1,22 @@
+diff --git a/singletons/progress_data.gd b/singletons/progress_data.gd
+index 021b7c4..d3a2fd4 100644
+--- a/singletons/progress_data.gd
++++ b/singletons/progress_data.gd
+@@ -329,7 +329,7 @@ func init_general_options() -> Dictionary:
+ 			"sound": 0.75, 
+ 			"music": 0.25
+ 		}, 
+-		"fullscreen": true, 
++		"fullscreen": false, 
+ 		"screenshake": true, 
+ 		"language": "en", 
+ 		"main_screen_keyart": 0, 
+@@ -1058,7 +1058,7 @@ func apply_settings() -> void :
+ 
+ 	TranslationServer.set_locale(settings.language)
+ 
+-	if not DebugService.no_fullscreen_on_launch:
++	if OS.get_name() != "HTML5" and not DebugService.no_fullscreen_on_launch:
+ 		OS.window_fullscreen = settings.fullscreen
+ 
+ 	if Utils.is_on_console() and not Utils.on_gdk_desktop:

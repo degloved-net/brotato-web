@@ -1,0 +1,5 @@
+.tools/
+.idea/
+work/
+build/
+.build-paths

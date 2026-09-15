@@ -1,0 +1,13 @@
+diff --git a/project.godot b/project.godot
+index 7d1842d..a1c4f50 100644
+--- a/project.godot
++++ b/project.godot
+@@ -2804,7 +2804,7 @@ window_placement/rect=Rect2( 300, 200, 1200, 700 )
+ 
+ [editor_plugins]
+ 
+-enabled=PoolStringArray( "res://addons/brotatools/plugin.cfg", "res://addons/resave_scenes/plugin.cfg" )
++enabled=PoolStringArray( "res://addons/brotatools/plugin.cfg" )
+ 
+ [global]
+ 

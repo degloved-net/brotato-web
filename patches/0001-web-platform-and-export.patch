@@ -1,0 +1,63 @@
+diff --git a/project.godot b/project.godot
+index 771d43a..a3d1dfc 100644
+--- a/project.godot
++++ b/project.godot
+@@ -9,6 +9,6 @@
+ config_version=4
+ 
+-_custom_features="steam"
++_custom_features="web"
+ _global_script_classes=[ {
+ "base": "Node",
+ "class": "AbstractPlatform",
+diff --git a/addons/mod_loader/options/profiles/default.tres b/addons/mod_loader/options/profiles/default.tres
+index 50b5a2a..7d42aa0 100644
+--- a/addons/mod_loader/options/profiles/default.tres
++++ b/addons/mod_loader/options/profiles/default.tres
+@@ -4,7 +4,7 @@
+ 
+ [resource]
+ script = ExtResource( 1 )
+-enable_mods = true
++enable_mods = false
+ locked_mods = [  ]
+ log_level = 3
+ disabled_mods = [  ]
+diff --git a/export_presets.cfg b/export_presets.cfg
+new file mode 100644
+index 0000000..9fd7c7b
+--- /dev/null
++++ b/export_presets.cfg
+@@ -0,0 +1,32 @@
++[preset.0]
++
++name="web"
++platform="HTML5"
++runnable=true
++custom_features="web"
++export_filter="all_resources"
++include_filter=""
++exclude_filter=""
++export_path="build/web/index.html"
++patch_list=PoolStringArray(  )
++script_export_mode=1
++script_encryption_key=""
++
++[preset.0.options]
++
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/head_include=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++html/experimental_virtual_keyboard=false
++html/export_icon=true
++html/threads_enabled=false
++html/gdnative=false
++html/emscripten_args=""
++html/file_sizes/threads_wasm=0
++html/file_sizes/wasm=0
++html/file_sizes/wasm_fallback=0
++html/file_sizes/audio_worklet=0
++html/file_sizes/audio_worklet_wasm=0

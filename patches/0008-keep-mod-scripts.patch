@@ -1,0 +1,9 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -10,7 +10,7 @@ exclude_filter=""
+ export_path="build/web/index.html"
+ patch_list=PoolStringArray(  )
+-script_export_mode=1
++script_export_mode=0
+ script_encryption_key=""

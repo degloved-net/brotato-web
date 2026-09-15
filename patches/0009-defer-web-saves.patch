@@ -1,0 +1,34 @@
+diff --git a/singletons/progress_data.gd b/singletons/progress_data.gd
+--- a/singletons/progress_data.gd
++++ b/singletons/progress_data.gd
+@@ -72,6 +72,7 @@ var data: Dictionary = {}
+ var killed_enemies: Dictionary = {}
+ var killed_by_enemies: Dictionary = {}
+ var items_bought: Dictionary = {}
++var web_save_queued: bool = false
+ 
+ func start_activity() -> void :
+ 	if need_activity:
+@@ -859,6 +860,22 @@ func _dedublicate_difficulties_unlocked() -> void :
+ 
+ 
+ func save() -> void :
++	if OS.get_name() == "HTML5":
++		queue_web_save()
++		return
++	save_now()
++
++func queue_web_save() -> void :
++	if web_save_queued:
++		return
++	web_save_queued = true
++	call_deferred("save_web")
++
++func save_web() -> void :
++	web_save_queued = false
++	save_now()
++
++func save_now() -> void :
+ 	if DebugService.disable_saving:
+ 		return
+ 	if load_status == LoadStatus.CORRUPTED_ALL_SAVES_NO_STEAM or load_status == LoadStatus.CORRUPTED_ALL_SAVES_NO_EPIC:

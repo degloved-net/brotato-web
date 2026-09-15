@@ -1,0 +1,10 @@
+diff --git a/addons/mod_loader/mod_loader_store.gd b/addons/mod_loader/mod_loader_store.gd
+--- a/addons/mod_loader/mod_loader_store.gd
++++ b/addons/mod_loader/mod_loader_store.gd
+@@ -139,6 +139,8 @@ func _init():
+ 	_update_ml_options_from_options_resource()
+ 	_update_ml_options_from_cli_args()
++	if OS.get_name() == "HTML5":
++		ml_options.enable_mods = true
+ 	
+ 	_ModLoaderCache.init_cache(self)

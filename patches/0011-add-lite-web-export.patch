@@ -1,0 +1,64 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -30,5 +30,38 @@ html/file_sizes/wasm=0
+ html/file_sizes/wasm_fallback=0
+ html/file_sizes/audio_worklet=0
+ html/file_sizes/audio_worklet_wasm=0
++
++[preset.2]
++
++name="web-lite"
++platform="HTML5"
++runnable=true
++custom_features="web,lite"
++export_filter="all_resources"
++include_filter="mods-unpacked/**"
++exclude_filter="*.wav,*.mp3,*.ogg,*.sample,*.mp3str,*.oggstr"
++export_path="build/web-lite/index.html"
++patch_list=PoolStringArray(  )
++script_export_mode=0
++script_encryption_key=""
++
++[preset.2.options]
++
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/head_include=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++html/experimental_virtual_keyboard=false
++html/export_icon=true
++html/threads_enabled=false
++html/gdnative=false
++html/emscripten_args=""
++html/file_sizes/threads_wasm=0
++html/file_sizes/wasm=0
++html/file_sizes/wasm_fallback=0
++html/file_sizes/audio_worklet=0
++html/file_sizes/audio_worklet_wasm=0
+ 
+ [preset.1]
+diff --git a/lite_silence.tres b/lite_silence.tres
+new file mode 100644
+--- /dev/null
++++ b/lite_silence.tres
+@@ -0,0 +1,6 @@
++[gd_resource type="AudioStreamGenerator" format=2]
++
++[resource]
++
++mix_rate = 44100.0
++buffer_length = 0.1
+diff --git a/singletons/progress_data.gd b/singletons/progress_data.gd
+--- a/singletons/progress_data.gd
++++ b/singletons/progress_data.gd
+@@ -1092,6 +1092,7 @@ func _apply_sounds_settings() -> void :
+ 		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear2db(settings.volume.master ))
+ 		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Sound"), linear2db(settings.volume.sound))
+ 		AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"), linear2db(settings.volume.music))
++		AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), OS.has_feature("lite"))
+ 
+ 
+ func set_font_size(value: float) -> void :
