@@ -26,6 +26,8 @@ for name in web web-threads web-lite; do
 	rm -rf "$output_dir"
 	mkdir -p "$output_dir"
 	"$godot" --path "$export_dir" --export "$name" "$output_dir/index.html"
+	build_id=$(sha256sum "$output_dir/index.pck" | awk '{print $1}')
+	sed -i "s/__BROTATO_BUILD_ID__/$build_id/g" "$output_dir/index.html"
 	find "$output_dir" -type f \( -name '*.html' -o -name '*.js' -o -name '*.wasm' -o -name '*.pck' \) -print0 |
 		xargs -0 -r -n1 gzip -9 --keep
 	if test "$name" = web-lite; then

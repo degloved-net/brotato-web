@@ -1,0 +1,309 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -17,5 +17,5 @@ vram_texture_compression/for_desktop=true
+ vram_texture_compression/for_mobile=false
+-html/custom_html_shell=""
++html/custom_html_shell="res://web_shell.html"
+ html/head_include=""
+ html/canvas_resize_policy=2
+ html/focus_canvas_on_start=true
+@@ -50,5 +50,5 @@ vram_texture_compression/for_desktop=true
+ vram_texture_compression/for_mobile=false
+-html/custom_html_shell=""
++html/custom_html_shell="res://web_shell.html"
+ html/head_include=""
+ html/canvas_resize_policy=2
+ html/focus_canvas_on_start=true
+@@ -84,5 +84,5 @@ variant/export_type=1
+ vram_texture_compression/for_desktop=true
+ vram_texture_compression/for_mobile=false
+-html/custom_html_shell=""
++html/custom_html_shell="res://web_shell.html"
+ html/head_include=""
+ html/canvas_resize_policy=2
+ html/focus_canvas_on_start=true
+diff --git a/web_shell.html b/web_shell.html
+new file mode 100644
+index 0000000..0000000
+--- /dev/null
++++ b/web_shell.html
+@@ -0,0 +1,102 @@
++<!doctype html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>$GODOT_PROJECT_NAME</title>
++    <style>
++      *,
++      *::before,
++      *::after {
++        box-sizing: border-box;
++        margin: 0;
++        padding: 0;
++      }
++      html,
++      body {
++        width: 100%;
++        height: 100%;
++        overflow: hidden;
++        background: #000;
++      }
++      #loading {
++        position: absolute;
++        inset: 0;
++        display: flex;
++        align-items: center;
++        justify-content: center;
++        color: #fff;
++        font: 1.5rem/1 sans-serif;
++        z-index: 1;
++        flex-direction: column;
++        gap: 1rem;
++      }
++      #loading.hidden {
++        display: none;
++      }
++      canvas {
++        width: 100%;
++        height: 100%;
++        display: block;
++      }
++    </style>
++$GODOT_HEAD_INCLUDE
++  </head>
++  <body>
++    <div id="loading">loading game content...</div>
++    <canvas id="canvas" oncontextmenu="event.preventDefault()">
++      HTML5 canvas appears to be unsupported in the current browser.<br />
++      Please try updating or use a different browser.
++    </canvas>
++    <script type="text/javascript" src="$GODOT_URL"></script>
++    <script>
++      const GODOT_CONFIG = $GODOT_CONFIG;
++      const engine = new Engine(GODOT_CONFIG);
++      const loading = document.getElementById("loading");
++      const pck = new URL(GODOT_CONFIG.executable + ".pck", location.href).href;
++      const originalFetch = window.fetch.bind(window);
++      const cacheName = "brotato-game-__BROTATO_BUILD_ID__";
++      let gameContent = "loading game content";
++
++      function showFailure(error) {
++        loading.textContent = error.message || error;
++      }
++
++      function prepareGameCache() {
++        if (!window.caches) return Promise.resolve();
++        return caches.open(cacheName).then((cache) => {
++          return cache.match(pck).then((cached) => {
++            if (cached) gameContent = "loading cached game content";
++            window.fetch = (resource, options) => {
++              const url = new URL(resource instanceof Request ? resource.url : resource, location.href).href;
++              if (url !== pck) return originalFetch(resource, options);
++              return cache.match(pck).then((response) => {
++                if (response) return response;
++                return originalFetch(resource, options).then((networkResponse) => {
++                  if (networkResponse.ok) cache.put(pck, networkResponse.clone()).catch(() => {});
++                  return networkResponse;
++                });
++              });
++            };
++          });
++        }).catch(() => {});
++      }
++
++      if (!Engine.isWebGLAvailable()) {
++        showFailure("webgl not available");
++      } else {
++        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
++        prepareGameCache().then(() => {
++          loading.textContent = gameContent + "...";
++          return engine.startGame({
++            onProgress: (current) => {
++              loading.textContent = gameContent + "... " + Math.floor(current / 1048576) + " mb";
++            },
++          });
++        }).then(() => {
++          loading.classList.add("hidden");
++        }, showFailure);
++      }
++    </script>
++  </body>
++</html>
+diff --git a/singletons/menu_data.gd b/singletons/menu_data.gd
+--- a/singletons/menu_data.gd
++++ b/singletons/menu_data.gd
+@@ -1,6 +1,6 @@
+ extends Node
+ 
+-var community_url: String = "https://www.blobfishgames.com/community"
++var community_url: String = "https://discord.gg/A66shU3rJ9"
+ var newsletter_url: String = "https://www.blobfishgames.com/newsletter"
+ onready var more_games_url: String = Platform.get_more_games_url()
+ onready var dlc_url: String = Platform.get_dlc_url()
+diff --git a/ui/menus/pages/main_menu.gd b/ui/menus/pages/main_menu.gd
+--- a/ui/menus/pages/main_menu.gd
++++ b/ui/menus/pages/main_menu.gd
+@@ -13,7 +13,6 @@ onready var start_button = $"%StartButton"
+ onready var options_button = $"%OptionsButton"
+ onready var codex_button = $"%CodexButton"
+ onready var mods_button = $"%ModsButton"
+-onready var quit_button = $"%QuitButton"
+ 
+ 
+ onready var more_games_button = $"%MoreGamesButton"
+@@ -77,8 +76,6 @@ func _process(_delta: float) -> void :
+ 		start_button.focus_neighbour_right = path_left_right
+ 		options_button.focus_neighbour_left = path_left_right
+ 		options_button.focus_neighbour_right = path_left_right
+-		quit_button.focus_neighbour_left = path_left_right
+-		quit_button.focus_neighbour_right = path_left_right
+ 
+ 		var menu_gameplay_options = get_parent().find_node("MenuGameplayOptions")
+ 		if menu_gameplay_options != null:
+@@ -130,8 +127,6 @@ func refresh_menu() -> void :
+ 		start_button.focus_neighbour_right = path_left_right
+ 		options_button.focus_neighbour_left = path_left_right
+ 		options_button.focus_neighbour_right = path_left_right
+-		quit_button.focus_neighbour_left = path_left_right
+-		quit_button.focus_neighbour_right = path_left_right
+ 
+ func setup_menu() -> void :
+ 	refresh_menu()
+@@ -151,32 +146,16 @@ func setup_menu() -> void :
+ 		start_button.focus_neighbour_top = ""
+ 
+ 		if Utils.is_on_console():
+-			
+-			if Utils.on_gdk_desktop:
+-				
+-				credits_button.focus_neighbour_bottom = ""
+-				quit_button.focus_neighbour_bottom = continue_button.get_path()
+-				continue_button.focus_neighbour_top = quit_button.get_path()
+-			else:
+-				
+-				credits_button.focus_neighbour_bottom = continue_button.get_path()
+-				continue_button.focus_neighbour_top = credits_button.get_path()
++			credits_button.focus_neighbour_bottom = continue_button.get_path()
++			continue_button.focus_neighbour_top = credits_button.get_path()
+ 
+ 	else:
+ 		
+ 		start_button.grab_focus()
+ 
+ 		if Utils.is_on_console():
+-			
+-			if Utils.on_gdk_desktop:
+-				
+-				credits_button.focus_neighbour_bottom = ""
+-				quit_button.focus_neighbour_bottom = start_button.get_path()
+-				start_button.focus_neighbour_top = quit_button.get_path()
+-			else:
+-				
+-				start_button.focus_neighbour_top = credits_button.get_path()
+-				credits_button.focus_neighbour_bottom = start_button.get_path()
++			start_button.focus_neighbour_top = credits_button.get_path()
++			credits_button.focus_neighbour_bottom = start_button.get_path()
+ 
+ 
+ func setup_console_no_dlc_menu() -> void :
+@@ -235,8 +214,8 @@ func setup_dlc_desktop_menu() -> void :
+ 		right_container.add_child(codex_button)
+ 		codex_button.size_flags_horizontal = 8
+ 
+-	credits_button.focus_neighbour_left = quit_button.get_path()
+-	credits_button.focus_neighbour_right = quit_button.get_path()
++	credits_button.focus_neighbour_left = options_button.get_path()
++	credits_button.focus_neighbour_right = options_button.get_path()
+ 
+ 	codex_button.focus_neighbour_left = options_button.get_path()
+ 	codex_button.focus_neighbour_right = options_button.get_path()
+@@ -349,11 +328,6 @@ func _on_CommunityButton_pressed() -> void :
+ 	var _error = OS.shell_open(MenuData.community_url)
+ 
+ 
+-func _on_QuitButton_pressed() -> void :
+-	if not Utils.is_on_console() or Utils.on_gdk_desktop:
+-		get_tree().notification(MainLoop.NOTIFICATION_WM_QUIT_REQUEST)
+-
+-
+ func _on_NewsletterButton_pressed() -> void :
+ 	var _error = OS.shell_open(MenuData.newsletter_url)
+ 
+diff --git a/ui/menus/pages/main_menu.tscn b/ui/menus/pages/main_menu.tscn
+--- a/ui/menus/pages/main_menu.tscn
++++ b/ui/menus/pages/main_menu.tscn
+@@ -65,7 +65,6 @@ margin_right = 332.0
+ margin_bottom = 80.0
+ rect_min_size = Vector2( 0, 80 )
+ focus_neighbour_left = NodePath("../../ButtonsRight/ModsButton")
+-focus_neighbour_top = NodePath("../QuitButton")
+ focus_neighbour_right = NodePath("../../ButtonsRight/ModsButton")
+ text = "MENU_RESUME"
+ align = 0
+@@ -127,19 +126,6 @@ align = 0
+ expand_icon = true
+ script = ExtResource( 5 )
+ 
+-[node name="QuitButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft"]
+-unique_name_in_owner = true
+-margin_top = 427.0
+-margin_right = 332.0
+-margin_bottom = 492.0
+-focus_neighbour_left = NodePath("../../ButtonsRight/CreditsButton")
+-focus_neighbour_right = NodePath("../../ButtonsRight/CreditsButton")
+-focus_neighbour_bottom = NodePath("../StartButton")
+-text = "MENU_QUIT"
+-align = 0
+-expand_icon = true
+-script = ExtResource( 5 )
+-
+ [node name="EmptySpace" type="ColorRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+ margin_left = 1138.0
+ margin_right = 1138.0
+@@ -202,7 +188,7 @@ margin_bottom = 402.0
+ focus_neighbour_left = NodePath("../../ButtonsLeft/OptionsButton")
+ focus_neighbour_right = NodePath("../../ButtonsLeft/OptionsButton")
+ size_flags_horizontal = 8
+-text = "MENU_COMMUNITY"
++text = "Discord"
+ align = 0
+ script = ExtResource( 5 )
+ 
+@@ -212,8 +198,8 @@ margin_left = 376.0
+ margin_top = 427.0
+ margin_right = 698.0
+ margin_bottom = 492.0
+-focus_neighbour_left = NodePath("../../ButtonsLeft/QuitButton")
+-focus_neighbour_right = NodePath("../../ButtonsLeft/QuitButton")
++focus_neighbour_left = NodePath("../../ButtonsLeft/OptionsButton")
++focus_neighbour_right = NodePath("../../ButtonsLeft/OptionsButton")
+ focus_neighbour_bottom = NodePath("../ModsButton")
+ size_flags_horizontal = 8
+ text = "MENU_CREDITS"
+@@ -263,7 +249,6 @@ align = 2
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/ProfileButton" to="." method="_on_ProfileButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/CodexButton" to="." method="_on_CodexButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/OptionsButton" to="." method="_on_OptionsButton_pressed"]
+-[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/QuitButton" to="." method="_on_QuitButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsRight/ModsButton" to="." method="_on_ModsButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsRight/MoreGamesButton" to="." method="_on_MoreGamesButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsRight/NewsletterButton" to="." method="_on_NewsletterButton_pressed"]
+diff --git a/ui/menus/title_screen/title_screen.gd b/ui/menus/title_screen/title_screen.gd
+--- a/ui/menus/title_screen/title_screen.gd
++++ b/ui/menus/title_screen/title_screen.gd
+@@ -21,13 +21,6 @@ func _ready() -> void :
+ 	update_continue_button()
+ 	update_profile_button()
+ 
+-	if not Utils.is_on_console() or Utils.on_gdk_desktop:
+-		_main_menu.quit_button.show()
+-		_main_menu.quit_button.activate()
+-	else:
+-		_main_menu.quit_button.hide()
+-		_main_menu.quit_button.disable()
+-
+ 	RunData.current_zone = 0
+ 	RunData.reset()
+ 
