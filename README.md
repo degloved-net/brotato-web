@@ -13,5 +13,6 @@ sh scripts/add-mod.sh
 sh scripts/build.sh
 ```
 
- _some mods may need changes for the web or your game version
+ 
+_some mods may need changes for the web or your game version_
 
