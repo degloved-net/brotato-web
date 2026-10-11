@@ -1,0 +1,92 @@
+diff --git a/project.godot b/project.godot
+index 6d38474..5a09c4f 100644
+--- a/project.godot
++++ b/project.godot
+@@ -8,7 +8,7 @@
+ 
+ config_version=4
+ 
+-_custom_features="steam"
++_custom_features="web"
+ _global_script_classes=[ {
+ "base": "Node",
+ "class": "AbstractPlatform",
+diff --git a/singletons/announcement_manager.gd b/singletons/announcement_manager.gd
+index 2f1f681..b2ef31f 100644
+--- a/singletons/announcement_manager.gd
++++ b/singletons/announcement_manager.gd
+@@ -17,6 +17,8 @@ var _image_to_download: String
+ 
+ 
+ func _ready() -> void :
++	if OS.get_name() == "HTML5":
++		return
+ 	if OS.get_name().begins_with("Seaven"):
+ 		return
+ 
+diff --git a/singletons/crash_reporter.gd b/singletons/crash_reporter.gd
+index 8678ebc..4bf4549 100644
+--- a/singletons/crash_reporter.gd
++++ b/singletons/crash_reporter.gd
+@@ -10,6 +10,8 @@ var previous_crashed_mod: = ""
+ var _mod_unzip_error: = "The mod zip at path"
+ 
+ func _init() -> void :
++	if OS.get_name() == "HTML5":
++		return
+ 	
+ 	print(_version_string())
+ 	
+diff --git a/singletons/progress_data.gd b/singletons/progress_data.gd
+index a825541..196cdf1 100644
+--- a/singletons/progress_data.gd
++++ b/singletons/progress_data.gd
+@@ -72,6 +72,7 @@ var data: Dictionary = {}
+ var killed_enemies: Dictionary = {}
+ var killed_by_enemies: Dictionary = {}
+ var items_bought: Dictionary = {}
++var web_save_queued: bool = false
+ 
+ func start_activity() -> void :
+ 	if need_activity:
+@@ -329,7 +330,7 @@ func init_general_options() -> Dictionary:
+ 			"sound": 0.75, 
+ 			"music": 0.25
+ 		}, 
+-		"fullscreen": true, 
++		"fullscreen": false,
+ 		"screenshake": true, 
+ 		"language": "en", 
+ 		"main_screen_keyart": 0, 
+@@ -859,6 +860,22 @@ func _dedublicate_difficulties_unlocked() -> void :
+ 
+ 
+ func save() -> void :
++	if OS.get_name() == "HTML5":
++		queue_web_save()
++		return
++	save_now()
++
++func queue_web_save() -> void :
++	if web_save_queued:
++		return
++	web_save_queued = true
++	call_deferred("save_web")
++
++func save_web() -> void :
++	web_save_queued = false
++	save_now()
++
++func save_now() -> void :
+ 	if DebugService.disable_saving:
+ 		return
+ 	if load_status == LoadStatus.CORRUPTED_ALL_SAVES_NO_STEAM or load_status == LoadStatus.CORRUPTED_ALL_SAVES_NO_EPIC:
+@@ -1058,7 +1075,7 @@ func apply_settings() -> void :
+ 
+ 	TranslationServer.set_locale(settings.language)
+ 
+-	if not DebugService.no_fullscreen_on_launch:
++	if OS.get_name() != "HTML5" and not DebugService.no_fullscreen_on_launch:
+ 		OS.window_fullscreen = settings.fullscreen
+ 
+ 	if Utils.is_on_console() and not Utils.on_gdk_desktop:

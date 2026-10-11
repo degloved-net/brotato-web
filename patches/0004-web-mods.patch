@@ -1,0 +1,58 @@
+diff --git a/addons/mod_loader/internal/path.gd b/addons/mod_loader/internal/path.gd
+index b2029d7..ac7452e 100644
+--- a/addons/mod_loader/internal/path.gd
++++ b/addons/mod_loader/internal/path.gd
+@@ -12,6 +12,8 @@ const MOD_CONFIG_DIR_PATH: = "user://configs"
+ 
+ 
+ static func get_local_folder_dir(subfolder: String = "") -> String:
++	if OS.get_name() == "HTML5":
++		return "res://".plus_file(subfolder)
+ 	var game_install_directory: = OS.get_executable_path().get_base_dir()
+ 
+ 	if OS.get_name() == "OSX":
+@@ -31,6 +33,8 @@ static func get_local_folder_dir(subfolder: String = "") -> String:
+ 
+ 
+ static func get_override_path() -> String:
++	if OS.get_name() == "HTML5":
++		return "res://override.cfg"
+ 	var base_path: = ""
+ 	if OS.has_feature("editor"):
+ 		base_path = ProjectSettings.globalize_path("res://")
+diff --git a/addons/mod_loader/mod_loader.gd b/addons/mod_loader/mod_loader.gd
+index 62d9049..9a78372 100644
+--- a/addons/mod_loader/mod_loader.gd
++++ b/addons/mod_loader/mod_loader.gd
+@@ -230,6 +230,8 @@ func _check_autoload_positions() -> void :
+ 
+ 
+ func _load_mod_zips() -> Dictionary:
++	if OS.get_name() == "HTML5":
++		return {}
+ 	var zip_data: = {}
+ 
+ 	if not ModLoaderStore.ml_options.steam_workshop_enabled:
+@@ -253,6 +255,8 @@ func _setup_mods() -> int:
+ 	var unpacked_mods_path: = _ModLoaderPath.get_unpacked_mods_dir_path()
+ 
+ 	var dir: = Directory.new()
++	if OS.get_name() == "HTML5" and not dir.dir_exists(unpacked_mods_path):
++		return 0
+ 	if not dir.open(unpacked_mods_path) == OK:
+ 		ModLoaderLog.warning("Can't open unpacked mods folder %s." % unpacked_mods_path, LOG_NAME)
+ 		return - 1
+diff --git a/addons/mod_loader/mod_loader_store.gd b/addons/mod_loader/mod_loader_store.gd
+index 7bb47a4..e95a5fd 100644
+--- a/addons/mod_loader/mod_loader_store.gd
++++ b/addons/mod_loader/mod_loader_store.gd
+@@ -139,6 +139,9 @@ var ml_options: = {
+ func _init():
+ 	_update_ml_options_from_options_resource()
+ 	_update_ml_options_from_cli_args()
++	if OS.get_name() == "HTML5":
++		ml_options.enable_mods = true
++		ml_options.steam_workshop_enabled = false
+ 	
+ 	_ModLoaderCache.init_cache(self)
+ 

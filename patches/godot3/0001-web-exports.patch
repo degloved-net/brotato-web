@@ -1,0 +1,47 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+new file mode 100644
+index 0000000..8215cd2
+--- /dev/null
++++ b/export_presets.cfg
+@@ -0,0 +1,41 @@
++[preset.0]
++name="web"
++platform="HTML5"
++runnable=true
++custom_features="web"
++export_filter="all_resources"
++include_filter="web.cfg,override.cfg,mods-unpacked/**"
++exclude_filter=""
++export_path=""
++script_export_mode=0
++script_encryption_key=""
++
++[preset.0.options]
++variant/export_type=0
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++html/export_icon=false
++
++[preset.1]
++name="web-threads"
++platform="HTML5"
++runnable=true
++custom_features="web,threads"
++export_filter="all_resources"
++include_filter="web.cfg,override.cfg,mods-unpacked/**"
++exclude_filter=""
++export_path=""
++script_export_mode=0
++script_encryption_key=""
++
++[preset.1.options]
++variant/export_type=1
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++html/export_icon=false

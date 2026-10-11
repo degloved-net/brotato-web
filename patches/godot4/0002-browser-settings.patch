@@ -1,0 +1,21 @@
+diff --git a/web.cfg b/web.cfg
+new file mode 100644
+index 0000000..d2a326c
+--- /dev/null
++++ b/web.cfg
+@@ -0,0 +1,15 @@
++[display]
++window/size/mode=0
++window/size/mode.web=0
++
++[rendering]
++renderer/rendering_method="gl_compatibility"
++renderer/rendering_method.web="gl_compatibility"
++renderer/rendering_method.mobile="gl_compatibility"
++threads/thread_model=0
++
++[editor_plugins]
++enabled=PackedStringArray()
++
++[audio]
++general/default_playback_type.web=0

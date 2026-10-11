@@ -1,0 +1,47 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+new file mode 100644
+index 0000000..807d0ec
+--- /dev/null
++++ b/export_presets.cfg
+@@ -0,0 +1,41 @@
++[preset.0]
++name="web"
++platform="Web"
++runnable=true
++custom_features=""
++export_filter="all_resources"
++include_filter="web.cfg,override.cfg"
++exclude_filter=""
++export_path=""
++script_export_mode=0
++
++[preset.0.options]
++variant/extensions_support=false
++variant/thread_support=false
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++progressive_web_app/enabled=false
++
++[preset.1]
++name="web-threads"
++platform="Web"
++runnable=true
++custom_features="threads"
++export_filter="all_resources"
++include_filter="web.cfg,override.cfg"
++exclude_filter=""
++export_path=""
++script_export_mode=0
++
++[preset.1.options]
++variant/extensions_support=false
++variant/thread_support=true
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++progressive_web_app/enabled=false

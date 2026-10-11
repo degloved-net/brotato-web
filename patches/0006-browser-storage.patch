@@ -1,0 +1,35 @@
+diff --git a/addons/mod_loader/api/log.gd b/addons/mod_loader/api/log.gd
+index e8af392..172ca49 100644
+--- a/addons/mod_loader/api/log.gd
++++ b/addons/mod_loader/api/log.gd
+@@ -520,9 +520,16 @@ static func _rotate_log_file() -> void :
+ 			_clear_old_log_backups()
+ 
+ 	
++	var log_dir: = Directory.new()
++	if not log_dir.dir_exists(MOD_LOG_PATH.get_base_dir()):
++		if log_dir.make_dir_recursive(MOD_LOG_PATH.get_base_dir()) != OK:
++			push_warning("could not create mod log directory")
++			return
++
+ 	var error: = log_file.open(MOD_LOG_PATH, File.WRITE)
+ 	if not error == OK:
+ 		assert (false, "Could not open log file, error code: %s" % error)
++		return
+ 	log_file.store_string("%s Created log" % _get_date_string())
+ 	log_file.close()
+ 
+diff --git a/singletons/progress_data.gd b/singletons/progress_data.gd
+index 196cdf1..166bdec 100644
+--- a/singletons/progress_data.gd
++++ b/singletons/progress_data.gd
+@@ -618,6 +618,9 @@ func set_current_profile_id(profile_id: int) -> void :
+ func load_settings():
+ 	var file = File.new()
+ 	var file_path = SAVE_DIR + SETTINGS_FILE_NAME
++	if not file.file_exists(file_path):
++		set_current_profile_id(0)
++		return
+ 	var error_read = file.open(file_path, File.READ)
+ 	if error_read != OK:
+ 		printerr("ProgressData: Could not read %s." % [file_path])

@@ -1,0 +1,100 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 8215cd2..f8ae903 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -39,3 +39,45 @@ html/custom_html_shell=""
+ html/canvas_resize_policy=2
+ html/focus_canvas_on_start=true
+ html/export_icon=false
++
++[preset.2]
++name="web-lite"
++platform="HTML5"
++runnable=true
++custom_features="web,lite"
++export_filter="all_resources"
++include_filter="web.cfg,override.cfg,mods-unpacked/**"
++exclude_filter="*.wav,*.mp3,*.ogg,*.sample,*.mp3str,*.oggstr"
++export_path=""
++script_export_mode=0
++script_encryption_key=""
++
++[preset.2.options]
++variant/export_type=0
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++html/export_icon=false
++
++[preset.3]
++name="web-lite-threads"
++platform="HTML5"
++runnable=true
++custom_features="web,threads,lite"
++export_filter="all_resources"
++include_filter="web.cfg,override.cfg,mods-unpacked/**"
++exclude_filter="*.wav,*.mp3,*.ogg,*.sample,*.mp3str,*.oggstr"
++export_path=""
++script_export_mode=0
++script_encryption_key=""
++
++[preset.3.options]
++variant/export_type=1
++vram_texture_compression/for_desktop=true
++vram_texture_compression/for_mobile=false
++html/custom_html_shell=""
++html/canvas_resize_policy=2
++html/focus_canvas_on_start=true
++html/export_icon=false
+diff --git a/singletons/music_manager.gd b/singletons/music_manager.gd
+index 1cca51b..8c26109 100644
+--- a/singletons/music_manager.gd
++++ b/singletons/music_manager.gd
+@@ -43,6 +43,8 @@ func set_shuffled_tracks() -> void :
+ 
+ 
+ func play(volume: float = player.volume_db) -> void :
++	if OS.has_feature("lite"):
++		return
+ 
+ 	if shuffled_tracks.size() <= 0:
+ 
+diff --git a/singletons/sound_manager.gd b/singletons/sound_manager.gd
+index be09d02..9798b63 100644
+--- a/singletons/sound_manager.gd
++++ b/singletons/sound_manager.gd
+@@ -6,6 +6,8 @@ func instance_player() -> Node:
+ 
+ 
+ func play(sound: Resource, volume_mod: float = 0.0, pitch_rand: float = 0.0, always_play: bool = false) -> void :
++	if OS.has_feature("lite"):
++		return
+ 	if ( not players_available.empty() and sounds_to_play.size() < MAX_SOUNDS):
+ 		sounds_to_play.append([sound, volume_mod, pitch_rand])
+ 
+diff --git a/singletons/sound_manager_2d.gd b/singletons/sound_manager_2d.gd
+index 8693255..c6d5f18 100644
+--- a/singletons/sound_manager_2d.gd
++++ b/singletons/sound_manager_2d.gd
+@@ -6,6 +6,8 @@ func instance_player() -> Node:
+ 
+ 
+ func play(sound: Resource, pos: Vector2, volume_mod: float = 0.0, pitch_rand: float = 0.0, always_play: bool = false) -> void :
++	if OS.has_feature("lite"):
++		return
+ 	if ( not players_available.empty() and sounds_to_play.size() < MAX_SOUNDS):
+ 		sounds_to_play.append([sound, volume_mod, pitch_rand, pos])
+ 
+diff --git a/lite_silence.tres b/lite_silence.tres
+new file mode 100644
+--- /dev/null
++++ b/lite_silence.tres
+@@ -0,0 +1,6 @@
++[gd_resource type="AudioStreamSample" format=2]
++
++[resource]
++data = PoolByteArray( 0, 0 )
++format = 1
++mix_rate = 44100.0

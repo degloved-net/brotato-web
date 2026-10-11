@@ -1,0 +1,17 @@
+diff --git a/web.cfg b/web.cfg
+new file mode 100644
+index 0000000..c07fb9f
+--- /dev/null
++++ b/web.cfg
+@@ -0,0 +1,11 @@
++[display]
++window/size/fullscreen=false
++window/size/fullscreen.HTML5=false
++
++[rendering]
++quality/driver/driver_name="GLES2"
++quality/driver/driver_name.HTML5="GLES2"
++threads/thread_model=0
++
++[editor_plugins]
++enabled=PoolStringArray( )

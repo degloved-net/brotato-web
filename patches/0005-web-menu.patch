@@ -1,137 +1,5 @@
-diff --git a/export_presets.cfg b/export_presets.cfg
---- a/export_presets.cfg
-+++ b/export_presets.cfg
-@@ -17,5 +17,5 @@ vram_texture_compression/for_desktop=true
- vram_texture_compression/for_mobile=false
--html/custom_html_shell=""
-+html/custom_html_shell="res://web_shell.html"
- html/head_include=""
- html/canvas_resize_policy=2
- html/focus_canvas_on_start=true
-@@ -50,5 +50,5 @@ vram_texture_compression/for_desktop=true
- vram_texture_compression/for_mobile=false
--html/custom_html_shell=""
-+html/custom_html_shell="res://web_shell.html"
- html/head_include=""
- html/canvas_resize_policy=2
- html/focus_canvas_on_start=true
-@@ -84,5 +84,5 @@ variant/export_type=1
- vram_texture_compression/for_desktop=true
- vram_texture_compression/for_mobile=false
--html/custom_html_shell=""
-+html/custom_html_shell="res://web_shell.html"
- html/head_include=""
- html/canvas_resize_policy=2
- html/focus_canvas_on_start=true
-diff --git a/web_shell.html b/web_shell.html
-new file mode 100644
-index 0000000..0000000
---- /dev/null
-+++ b/web_shell.html
-@@ -0,0 +1,102 @@
-+<!doctype html>
-+<html lang="en">
-+  <head>
-+    <meta charset="utf-8" />
-+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+    <title>$GODOT_PROJECT_NAME</title>
-+    <style>
-+      *,
-+      *::before,
-+      *::after {
-+        box-sizing: border-box;
-+        margin: 0;
-+        padding: 0;
-+      }
-+      html,
-+      body {
-+        width: 100%;
-+        height: 100%;
-+        overflow: hidden;
-+        background: #000;
-+      }
-+      #loading {
-+        position: absolute;
-+        inset: 0;
-+        display: flex;
-+        align-items: center;
-+        justify-content: center;
-+        color: #fff;
-+        font: 1.5rem/1 sans-serif;
-+        z-index: 1;
-+        flex-direction: column;
-+        gap: 1rem;
-+      }
-+      #loading.hidden {
-+        display: none;
-+      }
-+      canvas {
-+        width: 100%;
-+        height: 100%;
-+        display: block;
-+      }
-+    </style>
-+$GODOT_HEAD_INCLUDE
-+  </head>
-+  <body>
-+    <div id="loading">loading game content...</div>
-+    <canvas id="canvas" oncontextmenu="event.preventDefault()">
-+      HTML5 canvas appears to be unsupported in the current browser.<br />
-+      Please try updating or use a different browser.
-+    </canvas>
-+    <script type="text/javascript" src="$GODOT_URL"></script>
-+    <script>
-+      const GODOT_CONFIG = $GODOT_CONFIG;
-+      const engine = new Engine(GODOT_CONFIG);
-+      const loading = document.getElementById("loading");
-+      const pck = new URL(GODOT_CONFIG.executable + ".pck", location.href).href;
-+      const originalFetch = window.fetch.bind(window);
-+      const cacheName = "brotato-game-__BROTATO_BUILD_ID__";
-+      let gameContent = "loading game content";
-+
-+      function showFailure(error) {
-+        loading.textContent = error.message || error;
-+      }
-+
-+      function prepareGameCache() {
-+        if (!window.caches) return Promise.resolve();
-+        return caches.open(cacheName).then((cache) => {
-+          return cache.match(pck).then((cached) => {
-+            if (cached) gameContent = "loading cached game content";
-+            window.fetch = (resource, options) => {
-+              const url = new URL(resource instanceof Request ? resource.url : resource, location.href).href;
-+              if (url !== pck) return originalFetch(resource, options);
-+              return cache.match(pck).then((response) => {
-+                if (response) return response;
-+                return originalFetch(resource, options).then((networkResponse) => {
-+                  if (networkResponse.ok) cache.put(pck, networkResponse.clone()).catch(() => {});
-+                  return networkResponse;
-+                });
-+              });
-+            };
-+          });
-+        }).catch(() => {});
-+      }
-+
-+      if (!Engine.isWebGLAvailable()) {
-+        showFailure("webgl not available");
-+      } else {
-+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-+        prepareGameCache().then(() => {
-+          loading.textContent = gameContent + "...";
-+          return engine.startGame({
-+            onProgress: (current) => {
-+              loading.textContent = gameContent + "... " + Math.floor(current / 1048576) + " mb";
-+            },
-+          });
-+        }).then(() => {
-+          loading.classList.add("hidden");
-+        }, showFailure);
-+      }
-+    </script>
-+  </body>
-+</html>
 diff --git a/singletons/menu_data.gd b/singletons/menu_data.gd
+index 611e5ad..dea98db 100644
 --- a/singletons/menu_data.gd
 +++ b/singletons/menu_data.gd
 @@ -1,6 +1,6 @@
@@ -143,6 +11,7 @@ diff --git a/singletons/menu_data.gd b/singletons/menu_data.gd
  onready var more_games_url: String = Platform.get_more_games_url()
  onready var dlc_url: String = Platform.get_dlc_url()
 diff --git a/ui/menus/pages/main_menu.gd b/ui/menus/pages/main_menu.gd
+index 511ea1d..07b9c7e 100644
 --- a/ui/menus/pages/main_menu.gd
 +++ b/ui/menus/pages/main_menu.gd
 @@ -13,7 +13,6 @@ onready var start_button = $"%StartButton"
@@ -232,6 +101,7 @@ diff --git a/ui/menus/pages/main_menu.gd b/ui/menus/pages/main_menu.gd
  	var _error = OS.shell_open(MenuData.newsletter_url)
  
 diff --git a/ui/menus/pages/main_menu.tscn b/ui/menus/pages/main_menu.tscn
+index 865ad95..80f698b 100644
 --- a/ui/menus/pages/main_menu.tscn
 +++ b/ui/menus/pages/main_menu.tscn
 @@ -65,7 +65,6 @@ margin_right = 332.0
@@ -291,6 +161,7 @@ diff --git a/ui/menus/pages/main_menu.tscn b/ui/menus/pages/main_menu.tscn
  [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsRight/MoreGamesButton" to="." method="_on_MoreGamesButton_pressed"]
  [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsRight/NewsletterButton" to="." method="_on_NewsletterButton_pressed"]
 diff --git a/ui/menus/title_screen/title_screen.gd b/ui/menus/title_screen/title_screen.gd
+index c40b538..3177081 100644
 --- a/ui/menus/title_screen/title_screen.gd
 +++ b/ui/menus/title_screen/title_screen.gd
 @@ -21,13 +21,6 @@ func _ready() -> void :

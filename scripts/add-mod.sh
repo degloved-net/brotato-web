@@ -1,21 +1,60 @@
 #!/usr/bin/env bash
-set -e
 
-repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
-project_dir="$repo_dir/work/project"
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
 
-read -r -e -p "mod zip: " mod_zip
+set -euo pipefail
 
-mod_path="$(unzip -Z1 "$mod_zip" | sed -n '/mod_main.gd$/p' | head -n 1)"
-mod_name="$(printf '%s\n' "$mod_path" | sed -n 's#^mods-unpacked/\([^/]*\)/mod_main.gd$#\1#p;s#^\([^/]*\)/mod_main.gd$#\1#p')"
-test -n "$mod_name"
-target_dir="$project_dir/mods-unpacked/$mod_name"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+project="$root/work/project"
+source "$root/scripts/paths.sh"
 
-test ! -e "$target_dir"
-mkdir -p "$project_dir/mods-unpacked"
-case "$mod_path" in
-  mods-unpacked/*) unzip -q "$mod_zip" -d "$project_dir" ;;
-  *) unzip -q "$mod_zip" -d "$project_dir/mods-unpacked" ;;
-esac
+if [[ ! -f "$project/project.godot" ]]; then
+    echo 'missing work/project; run scripts/recover.sh first' >&2
+    exit 1
+fi
 
-echo "added $mod_name"
+ask_path mod_zip 'mod zip'
+if [[ ! -f "$mod_zip" ]]; then
+    echo 'mod zip not found' >&2
+    exit 1
+fi
+entries="$(unzip -Z1 "$mod_zip")"
+mods=()
+while IFS= read -r entry; do
+    case "$entry" in
+        /*|../*|*/../*|*/..)
+            echo 'invalid path in mod zip' >&2
+            exit 1
+            ;;
+        */mod_main.gd) mods+=("$entry") ;;
+    esac
+done <<< "$entries"
+if (( ${#mods[@]} != 1 )); then
+    echo 'choose a zip with one mod_main.gd' >&2
+    exit 1
+fi
+
+folder="${mods[0]%/mod_main.gd}"
+name="${folder#mods-unpacked/}"
+if [[ ! "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]]; then
+    echo 'expected a mod folder or mods-unpacked/mod-folder' >&2
+    exit 1
+fi
+target="$project/mods-unpacked/$name"
+if [[ -e "$target" ]]; then
+    echo "mod already exists: $name" >&2
+    exit 1
+fi
+
+temp="$(mktemp -d "$root/work/mod.XXXXXX")"
+trap 'rm -rf -- "$temp"' EXIT
+unzip -q "$mod_zip" "$folder/*" -d "$temp"
+if [[ ! -f "$temp/$folder/manifest.json" ]]; then
+    echo 'mod is missing manifest.json' >&2
+    exit 1
+fi
+mkdir -p "$project/mods-unpacked"
+mv -- "$temp/$folder" "$target"
+echo "added $name"

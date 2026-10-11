@@ -1,20 +1,39 @@
 #!/usr/bin/env bash
-set -e
 
-repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
-project_dir="$repo_dir/work/project"
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
+
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+project="$root/work/project"
 name="${1:-}"
+if [[ -z "$name" ]]; then
+    read -r -p 'patch name: ' name
+fi
 
-test -n "$name" || exit 1
+if [[ ! "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+    echo 'use lowercase letters, numbers, and dashes' >&2
+    exit 1
+fi
 
-git -C "$project_dir" ls-files --others --exclude-standard -z |
-  xargs -0 -r git -C "$project_dir" add -N --
+if [[ ! -d "$project/.git" ]] || ! git -C "$project" rev-parse --verify HEAD >/dev/null 2>&1; then
+    echo 'missing patch history in work/project' >&2
+    exit 1
+fi
 
-git -C "$project_dir" diff --quiet && exit 1
+last="$(find "$root/patches" -name '*.patch' -printf '%f\n' | sort | tail -n 1)"
+number="${last%%-*}"
+number="$((10#${number:-0000} + 1))"
+patch="$root/patches/$(printf '%04d' "$number")-$name.patch"
 
-number="$(find "$repo_dir/patches" -maxdepth 1 -type f -name '*.patch' | wc -l)"
-number="$(printf '%04d' "$((number + 1))")"
-patch="$repo_dir/patches/$number-$name.patch"
+git -C "$project" add -A
+if git -C "$project" diff --cached --quiet; then
+    echo 'nothing to save'
+    exit 1
+fi
 
-git -C "$project_dir" diff --binary > "$patch"
-echo "made $patch"
+git -C "$project" diff --cached --binary HEAD > "$patch"
+git -C "$project" -c user.name=local -c user.email=local commit -qm "$name"
+echo "saved $patch"
