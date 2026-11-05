@@ -1,0 +1,68 @@
+diff --git a/extensions/singletons/input_service.gd b/extensions/singletons/input_service.gd
+index c8fb61dd..c8ae61ba 100644
+--- a/extensions/singletons/input_service.gd
++++ b/extensions/singletons/input_service.gd
+@@ -11,17 +11,6 @@ func _has_duplicates(arr:Array) -> bool:
+ 		seen[v] = true
+ 	return false
+ 
+-func _ready() -> void :
+-	pause_mode = Node.PAUSE_MODE_PROCESS
+-	var _input_connect = Input.connect("joy_connection_changed", self, "on_joy_connection_changed")
+-
+-	if ProgressData.settings.movement_with_gamepad:
+-		enable_gamepad_movement()
+-	else:
+-		disable_gamepad_movement()
+-
+-	set_gamepad_echo_processing(true)
+-
+ func _copy_device_actions():
+ 	_set_bug_report_key()
+ 
+@@ -78,7 +67,7 @@ func _copy_device_actions():
+ 
+ 		var debug_key_mappings
+ 
+-		if config.data["enable TFGH (RESTART TO APPLY)"] == true:
++		if config == null or config.data.get("enable TFGH (RESTART TO APPLY)", true):
+ 			debug_key_mappings = {
+ 				KEY_W: [debug_device_id + wasd, "up"], 
+ 				KEY_A: [debug_device_id + wasd, "left"], 
+diff --git a/mod_main.gd b/mod_main.gd
+index 059f3274..c9875132 100644
+--- a/mod_main.gd
++++ b/mod_main.gd
+@@ -4,6 +4,11 @@ var data = ModLoaderStore.mod_data[MOD_ID]
+ var version = data.manifest.version_number
+ onready var input := get_node("/root/InputService")
+ func _init():
++	# Extensions read this config during singleton initialization, before _ready.
++	if not data.configs.has(version):
++		var defaults = ModLoaderConfig.get_default_config(MOD_ID)
++		if defaults != null:
++			ModLoaderConfig.create_config(MOD_ID, version, defaults.data.duplicate(true))
+ 	ModLoaderLog.info("Init", MOD_ID)
+ 	ModLoaderMod.install_script_extension("res://mods-unpacked/Sebaman2009-MultiplePlayerKeyboards/extensions/singletons/input_service.gd")
+ 	ModLoaderMod.install_script_extension("res://mods-unpacked/Sebaman2009-MultiplePlayerKeyboards/extensions/singletons/coop_service.gd")
+@@ -30,8 +35,11 @@ func _ready():
+ 	call_deferred("_config")
+ 	register_input()
+ func _config()-> void:
++	if data.configs.has(version):
++		ModLoaderConfig.set_current_config(data.configs[version])
+ 	var ModsConfigInterface = get_node("/root/ModLoader/dami-ModOptions/ModsConfigInterface")
+ 	if ModsConfigInterface != null:
++		ModsConfigInterface.load_config(data)
+ 		ModLoaderLog.info("Connect setting_changed", MOD_ID)
+ 		ModsConfigInterface.connect("setting_changed", self, "setting_changed")
+ 	var config = ModLoaderConfig.get_config(MOD_ID, version)
+@@ -55,6 +63,8 @@ func _config()-> void:
+ 			config = ModLoaderConfig.create_config(MOD_ID, version, {})
+ 
+ func setting_changed(setting_name, value, _mod_nammod_namee)->void:
++	if _mod_nammod_namee != MOD_ID:
++		return
+ 	var config = ModLoaderConfig.get_current_config(MOD_ID)
+ 	if config != null:		
+ 		config.save_path = "user://configs/Sebaman2009-MultiplePlayerKeyboards/" + version + ".json"

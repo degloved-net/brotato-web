@@ -11,7 +11,7 @@ ask_path() {
         read -r -e -i "$fallback" -p "$label: " answer
     else
         printf '%s [%s]: ' "$label" "$fallback" >&2
-        IFS= read -r answer
+        IFS= read -r answer || true
     fi
     answer="${answer:-$fallback}"
     if [[ "$answer" == '-' ]]; then answer=''; fi

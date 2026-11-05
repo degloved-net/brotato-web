@@ -1,0 +1,22 @@
+diff --git a/extensions/main.gd b/extensions/main.gd
+index c422bba5..61521f09 100644
+--- a/extensions/main.gd
++++ b/extensions/main.gd
+@@ -67,14 +67,15 @@ func _create_speed_ui() -> void:
+ 		_speed_container.add_child(btn)
+ 		_speed_buttons.append(btn)
+ 
+-	_setup_focus_neighbours()
+-	_update_button_styles()
+ 
+ 	var quit_btn = buttons_container.get_node("QuitButton")
+ 	var speed_idx = quit_btn.get_index() + 1
+ 	buttons_container.add_child(wrapper)
+ 	buttons_container.move_child(wrapper, speed_idx)
+ 
++	_setup_focus_neighbours()
++	_update_button_styles()
++
+ 	_setup_vertical_focus(buttons_container)
+ 
+ 

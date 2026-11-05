@@ -1,0 +1,16 @@
+diff --git a/mods_config_interface.gd b/mods_config_interface.gd
+index fb1207ca..cbad9499 100644
+--- a/mods_config_interface.gd
++++ b/mods_config_interface.gd
+@@ -15,6 +15,11 @@ const COLOR_HEX_EXPRESSION = "#?([a-fA-F0-9]{2}){3,4}"
+ func _ready():
+ 	ModLoaderLog.info("Loading mod configs", LOG_NAME)
+ 	var _err_regex_compile = color_regex.compile(COLOR_HEX_EXPRESSION)
++	# ModLoader creates fresh user profiles after its children become ready.
++	call_deferred("_load_configs")
++
++
++func _load_configs():
+ 	var _nb_configs := 0
+ 
+ 	for mod_id in ModLoaderStore.mod_data:

@@ -1,0 +1,119 @@
+diff --git a/mod_main.gd b/mod_main.gd
+index 92fcee00..c0f3014c 100644
+--- a/mod_main.gd
++++ b/mod_main.gd
+@@ -16,6 +16,10 @@ var watchdog_timer = null
+ 
+ var _modoptions_connected = false
+ var _ui_patch_pending = false
++var _overlay_refresh_pending = false
++var _label_patch_pending = false
++var _pending_label_nodes = []
++var _overlay_font = null
+ 
+ 
+ func _init():
+@@ -46,13 +50,30 @@ func _on_node_added(node):
+ 	if not _modoptions_connected:
+ 		_try_connect_modoptions()
+ 
+-	if node != null and is_instance_valid(node) and node is Control:
+-		call_deferred("_patch_modoptions_label_node", node)
+-		var timer = get_tree().create_timer(0.08)
+-		timer.connect("timeout", self, "_patch_modoptions_label_node", [node])
++	# Batch label fixes once per burst instead of two callbacks per Control.
++	if node is Label or node is Button:
++		_pending_label_nodes.append(weakref(node))
++		if not _label_patch_pending:
++			_label_patch_pending = true
++			get_tree().create_timer(0.08).connect("timeout", self, "_flush_label_patches")
+ 
+-	# When Brotato creates/replaces UI roots, put the FPS overlay back on top.
+-	call_deferred("_create_or_restore_overlay")
++	# The overlay survives scene changes; only root changes can reorder it.
++	if node.get_parent() == get_tree().root and node != fps_layer and not _overlay_refresh_pending:
++		_overlay_refresh_pending = true
++		call_deferred("_refresh_overlay")
++
++
++func _refresh_overlay():
++	_create_or_restore_overlay()
++	_overlay_refresh_pending = false
++
++
++func _flush_label_patches():
++	_label_patch_pending = false
++	var pending = _pending_label_nodes
++	_pending_label_nodes = []
++	for reference in pending:
++		_patch_modoptions_label_node(reference.get_ref())
+ 
+ 
+ func _watchdog_tick():
+@@ -106,7 +127,7 @@ func _create_or_restore_overlay():
+ 		fps_layer.add_child(fps_label)
+ 
+ 	# Keep the layer last, so it draws above other root children when possible.
+-	if fps_layer.get_parent() == root:
++	if fps_layer.get_parent() == root and fps_layer.get_index() != root.get_child_count() - 1:
+ 		root.move_child(fps_layer, root.get_child_count() - 1)
+ 
+ 	_apply_overlay_style()
+@@ -137,13 +158,12 @@ func _apply_overlay_style():
+ 
+ 	fps_label.add_color_override("font_color", Color(fps_color))
+ 
+-	var font = DynamicFont.new()
+-	var base = load("res://resources/fonts/actual/base/font_26.tres")
+-	if base != null and base is DynamicFont:
+-		font = base.duplicate()
+-
+-	font.size = int(fps_size)
+-	fps_label.add_font_override("font", font)
++	if _overlay_font == null:
++		var base = load("res://resources/fonts/actual/base/font_26.tres")
++		_overlay_font = base.duplicate() if base is DynamicFont else DynamicFont.new()
++		_overlay_font.size = int(fps_size)
++	if not fps_label.has_font_override("font"):
++		fps_label.add_font_override("font", _overlay_font)
+ 
+ 	_apply_top_right_layout()
+ 
+@@ -304,10 +324,14 @@ func _modoptions_setting_to_key(setting_name):
+ 
+ 
+ func _schedule_ui_patch():
++	if _ui_patch_pending:
++		return
++	_ui_patch_pending = true
+ 	call_deferred("_patch_known_modoptions_rows_once")
+ 
+ 
+ func _patch_known_modoptions_rows_once():
++	_ui_patch_pending = false
+ 	var root = get_tree().root
+ 	if root == null:
+ 		return
+@@ -332,7 +356,7 @@ func _patch_modoptions_label_node(node):
+ 		return
+ 	if not (node is Control):
+ 		return
+-	if not _object_has_text_property(node):
++	if not (node is Label or node is Button):
+ 		return
+ 
+ 	var t = node.get("text")
+@@ -344,13 +368,6 @@ func _patch_modoptions_label_node(node):
+ 		node.set("text", replacement)
+ 
+ 
+-func _object_has_text_property(obj):
+-	for prop in obj.get_property_list():
+-		if str(prop.get("name", "")) == "text":
+-			return true
+-	return false
+-
+-
+ func _normal_case_label_for(text):
+ 	var s = text.strip_edges().replace("​", "")
+ 

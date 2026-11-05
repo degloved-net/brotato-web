@@ -2,14 +2,13 @@ diff --git a/singletons/menu_data.gd b/singletons/menu_data.gd
 index 611e5ad..dea98db 100644
 --- a/singletons/menu_data.gd
 +++ b/singletons/menu_data.gd
-@@ -1,6 +1,6 @@
+@@ -1,5 +1,5 @@
  extends Node
  
 -var community_url: String = "https://www.blobfishgames.com/community"
 +var community_url: String = "https://discord.gg/A66shU3rJ9"
  var newsletter_url: String = "https://www.blobfishgames.com/newsletter"
  onready var more_games_url: String = Platform.get_more_games_url()
- onready var dlc_url: String = Platform.get_dlc_url()
 diff --git a/ui/menus/pages/main_menu.gd b/ui/menus/pages/main_menu.gd
 index 511ea1d..07b9c7e 100644
 --- a/ui/menus/pages/main_menu.gd
@@ -118,9 +117,9 @@ index 865ad95..80f698b 100644
  
 -[node name="QuitButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft"]
 -unique_name_in_owner = true
--margin_top = 427.0
+-margin_top = 502.0
 -margin_right = 332.0
--margin_bottom = 492.0
+-margin_bottom = 567.0
 -focus_neighbour_left = NodePath("../../ButtonsRight/CreditsButton")
 -focus_neighbour_right = NodePath("../../ButtonsRight/CreditsButton")
 -focus_neighbour_bottom = NodePath("../StartButton")
@@ -142,9 +141,9 @@ index 865ad95..80f698b 100644
  script = ExtResource( 5 )
  
 @@ -212,8 +198,8 @@ margin_left = 376.0
- margin_top = 427.0
+ margin_top = 502.0
  margin_right = 698.0
- margin_bottom = 492.0
+ margin_bottom = 567.0
 -focus_neighbour_left = NodePath("../../ButtonsLeft/QuitButton")
 -focus_neighbour_right = NodePath("../../ButtonsLeft/QuitButton")
 +focus_neighbour_left = NodePath("../../ButtonsLeft/OptionsButton")

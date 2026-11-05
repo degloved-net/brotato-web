@@ -1,0 +1,158 @@
+diff --git a/effects/items/convert_stat_effect.gd b/effects/items/convert_stat_effect.gd
+index 537d9659..886086ec 100644
+--- a/effects/items/convert_stat_effect.gd
++++ b/effects/items/convert_stat_effect.gd
+@@ -6,7 +6,7 @@ export(float) var pct_converted = 1.0
+ export(String) var to_stat = "stat_max_hp"
+ export(int) var to_value = 1
+ 
+-var to_stat_hash: int = Keys.stat_max_hp_hash
++var to_stat_hash: int = "stat_max_hp".hash()
+ 
+ static func get_id() -> String:
+ 	return "convert_stat"
+diff --git a/singletons/menu_data.gd b/singletons/menu_data.gd
+index 0c17e27e..5fa3e132 100644
+--- a/singletons/menu_data.gd
++++ b/singletons/menu_data.gd
+@@ -10,3 +10,41 @@ var shop_scene: String = "res://ui/menus/shop/shop.tscn"
+ var character_selection_scene: String = "res://ui/menus/run/character_selection.tscn"
+ var weapon_selection_scene: String = "res://ui/menus/run/weapon_selection.tscn"
+ var difficulty_selection_scene: String = "res://ui/menus/run/difficulty_selection/difficulty_selection.tscn"
++
++
++# Keep frequently revisited scenes alive so Godot can reuse their resources.
++# Polling across frames avoids moving a synchronous load into the title screen.
++var _web_scene_cache: = {}
++var _web_scene_paths: = []
++var _web_scene_loader: ResourceInteractiveLoader
++var _web_scene_path: String
++
++
++func _ready() -> void:
++	if OS.get_name() != "HTML5":
++		set_process(false)
++		return
++	_web_scene_paths = [character_selection_scene, weapon_selection_scene,
++		difficulty_selection_scene, game_scene, shop_scene,
++		"res://ui/menus/shop/coop_shop.tscn", title_screen_scene]
++
++
++func _process(_delta: float) -> void:
++	var deadline = OS.get_ticks_usec() + 4000
++	while OS.get_ticks_usec() < deadline:
++		if _web_scene_loader == null:
++			if _web_scene_paths.empty():
++				set_process(false)
++				return
++			_web_scene_path = _web_scene_paths.pop_front()
++			_web_scene_loader = ResourceLoader.load_interactive(_web_scene_path)
++			if _web_scene_loader == null:
++				push_warning("Could not warm scene: " + _web_scene_path)
++				continue
++		var error = _web_scene_loader.poll()
++		if error == ERR_FILE_EOF:
++			_web_scene_cache[_web_scene_path] = _web_scene_loader.get_resource()
++			_web_scene_loader = null
++		elif error != OK:
++			push_warning("Could not warm scene: " + _web_scene_path + " (" + str(error) + ")")
++			_web_scene_loader = null
+diff --git a/singletons/progress_data_loader_beta.gd b/singletons/progress_data_loader_beta.gd
+index cf930cba..7f4845dd 100644
+--- a/singletons/progress_data_loader_beta.gd
++++ b/singletons/progress_data_loader_beta.gd
+@@ -445,8 +445,7 @@ func _load_backups(basename: String, previous_path: String, is_run_save: bool =
+ 		load_progress_save_file(backup_paths[next_index])
+ 
+ func save() -> void :
+-	var save_object_without_run_state = get_save_object()
+-	save_object_without_run_state.erase("current_run_state")
++	var save_object_without_run_state = get_save_object(false)
+ 	var string_profile_id = String(profile_id)
+ 	save_content("dlc2p0save_v3_" + string_profile_id, save_path, _tmp_path, save_object_without_run_state)
+ 	save_content("dlc2p0run_v3_" + string_profile_id, run_save_path, _tmp_run_save_path, {
+@@ -542,8 +541,8 @@ func save_content(basename: String, path: String, tmp_path: String, content: Dic
+ 				return
+ 
+ 
+-func get_save_object() -> Dictionary:
+-	return {
++func get_save_object(include_run_state: bool = true) -> Dictionary:
++	var result = {
+ 		"zones_unlocked": zones_unlocked, 
+ 		"characters_unlocked": characters_unlocked, 
+ 		"upgrades_unlocked": upgrades_unlocked, 
+@@ -554,7 +553,6 @@ func get_save_object() -> Dictionary:
+ 		"difficulties_unlocked": difficulties_unlocked_serialized, 
+ 		"inactive_mods": inactive_mods, 
+ 		"read_announcements": read_announcements, 
+-		"current_run_state": serialize_run_state(run_state_deserialized), 
+ 		"data": data, 
+ 		"killed_enemies": killed_enemies, 
+ 		"killed_by_enemies": killed_by_enemies, 
+@@ -563,6 +561,9 @@ func get_save_object() -> Dictionary:
+ 		"show_main_title_beta_save_warning_popup": show_main_title_beta_save_warning_popup, 
+ 		"version": 3
+ 	}
++	if include_run_state:
++		result["current_run_state"] = serialize_run_state(run_state_deserialized)
++	return result
+ 
+ 
+ func serialize_run_state(state: Dictionary) -> Dictionary:
+diff --git a/singletons/progress_data_loader_v3.gd b/singletons/progress_data_loader_v3.gd
+index f74e4046..65f582e9 100644
+--- a/singletons/progress_data_loader_v3.gd
++++ b/singletons/progress_data_loader_v3.gd
+@@ -462,8 +462,7 @@ func _load_backups(basename: String, previous_path: String, is_run_save: bool =
+ 
+ 
+ func save() -> void :
+-	var save_object_without_run_state = get_save_object()
+-	save_object_without_run_state.erase("current_run_state")
++	var save_object_without_run_state = get_save_object(false)
+ 	var string_profile_id = String(profile_id)
+ 	save_content("save_v3_" + string_profile_id, save_path, _tmp_path, save_object_without_run_state)
+ 	save_content("run_v3_" + string_profile_id, run_save_path, _tmp_run_save_path, {
+@@ -565,8 +564,8 @@ func save_content(basename: String, path: String, tmp_path: String, content: Dic
+ 					return
+ 
+ 
+-func get_save_object() -> Dictionary:
+-	return {
++func get_save_object(include_run_state: bool = true) -> Dictionary:
++	var result = {
+ 		"zones_unlocked": zones_unlocked, 
+ 		"characters_unlocked": characters_unlocked, 
+ 		"upgrades_unlocked": upgrades_unlocked, 
+@@ -577,7 +576,6 @@ func get_save_object() -> Dictionary:
+ 		"difficulties_unlocked": difficulties_unlocked_serialized, 
+ 		"inactive_mods": inactive_mods, 
+ 		"read_announcements": read_announcements, 
+-		"current_run_state": serialize_run_state(run_state_deserialized), 
+ 		"data": data, 
+ 		"killed_enemies": killed_enemies, 
+ 		"killed_by_enemies": killed_by_enemies, 
+@@ -585,6 +583,9 @@ func get_save_object() -> Dictionary:
+ 		"deactivated_update_data": deactivated_update_data, 
+ 		"version": 3
+ 	}
++	if include_run_state:
++		result["current_run_state"] = serialize_run_state(run_state_deserialized)
++	return result
+ 
+ 
+ func serialize_run_state(state: Dictionary) -> Dictionary:
+diff --git a/ui/hud/ui_better_tab_container.gd b/ui/hud/ui_better_tab_container.gd
+index 29c85c20..b3cbe851 100644
+--- a/ui/hud/ui_better_tab_container.gd
++++ b/ui/hud/ui_better_tab_container.gd
+@@ -13,6 +13,8 @@ var _focus_emulator: FocusEmulator
+ var previous_pressed: Button
+ 
+ func _ready():
++	# Each scene instance owns its tab list; mods may append runtime tabs.
++	buttons_tab_np = buttons_tab_np.duplicate()
+ 	if RunData.is_coop_run:
+ 		_focus_emulator = Utils.get_focus_emulator(0)
+ 	

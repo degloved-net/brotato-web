@@ -49,10 +49,7 @@ index a825541..196cdf1 100644
  
  func start_activity() -> void :
  	if need_activity:
-@@ -329,7 +330,7 @@ func init_general_options() -> Dictionary:
- 			"sound": 0.75, 
- 			"music": 0.25
- 		}, 
+@@ -388,4 +389,4 @@ func init_general_options() -> Dictionary:
 -		"fullscreen": true, 
 +		"fullscreen": false,
  		"screenshake": true, 

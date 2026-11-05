@@ -15,7 +15,11 @@ if [[ ! -f "$project/project.godot" ]]; then
     exit 1
 fi
 
-ask_path mod_zip 'mod zip'
+if (( $# > 0 )); then
+    mod_zip="$1"
+else
+    ask_path mod_zip 'mod zip'
+fi
 if [[ ! -f "$mod_zip" ]]; then
     echo 'mod zip not found' >&2
     exit 1
@@ -54,6 +58,11 @@ unzip -q "$mod_zip" "$folder/*" -d "$temp"
 if [[ ! -f "$temp/$folder/manifest.json" ]]; then
     echo 'mod is missing manifest.json' >&2
     exit 1
+fi
+
+mod_patch="$root/patches/mods/$name.patch"
+if [[ -f "$mod_patch" ]]; then
+    patch --batch --forward -d "$temp/$folder" -p1 < "$mod_patch"
 fi
 mkdir -p "$project/mods-unpacked"
 mv -- "$temp/$folder" "$target"
