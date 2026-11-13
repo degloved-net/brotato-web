@@ -1,0 +1,31 @@
+--- a/ui/menus/pages/main_menu.tscn
++++ b/ui/menus/pages/main_menu.tscn
+@@ -234,22 +234,21 @@
+ margin_right = 1840.0
+ margin_bottom = 623.0
+ 
++[node name="PortVersionLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
++size_flags_horizontal = 3
++custom_fonts/font = ExtResource( 4 )
++text = "web port version 1"
++
+ [node name="ErrorLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+ unique_name_in_owner = true
+ margin_top = 3.0
+ margin_right = 1200.0
+ margin_bottom = 27.0
+-rect_min_size = Vector2( 1200, 0 )
++size_flags_horizontal = 3
+ custom_fonts/font = ExtResource( 6 )
+ text = "(!)"
+ autowrap = true
+ 
+-[node name="EmptySpace" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+-margin_left = 1204.0
+-margin_right = 1490.0
+-margin_bottom = 31.0
+-size_flags_horizontal = 3
+-
+ [node name="VersionLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+ unique_name_in_owner = true
+ margin_left = 1494.0

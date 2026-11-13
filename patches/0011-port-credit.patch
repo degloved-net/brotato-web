@@ -1,0 +1,57 @@
+--- a/ui/menus/pages/main_menu.gd
++++ b/ui/menus/pages/main_menu.gd
+@@ -152,8 +152,6 @@
+ 		continue_button.grab_focus()
+ 
+ 		
+-		start_button.focus_neighbour_top = ""
+-
+ 		if Utils.is_on_console():
+ 			credits_button.focus_neighbour_bottom = continue_button.get_path()
+ 			continue_button.focus_neighbour_top = credits_button.get_path()
+@@ -323,6 +321,10 @@
+ 
+ 
+ 
++func _on_PortCreditLink_pressed() -> void :
++	var _error = OS.shell_open("https://cirsius.net")
++
++
+ func _on_StartButton_pressed() -> void :
+ 	MusicManager.tween( - 5)
+ 	ProgressData.start_activity()
+--- a/ui/menus/pages/main_menu.tscn
++++ b/ui/menus/pages/main_menu.tscn
+@@ -72,6 +72,16 @@
+ expand_icon = true
+ script = ExtResource( 5 )
+ 
++[node name="PortCreditLink" type="LinkButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft"]
++unique_name_in_owner = true
++mouse_default_cursor_shape = 2
++focus_mode = 2
++focus_neighbour_bottom = NodePath("../StartButton")
++size_flags_horizontal = 0
++custom_fonts/font = ExtResource( 4 )
++text = "port by cirsius"
++underline = 2
++
+ [node name="StartButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft"]
+ unique_name_in_owner = true
+ margin_top = 90.0
+@@ -79,6 +89,7 @@
+ margin_bottom = 170.0
+ rect_min_size = Vector2( 0, 80 )
+ focus_neighbour_left = NodePath("../../ButtonsRight/ModsButton")
++focus_neighbour_top = NodePath("../PortCreditLink")
+ focus_neighbour_right = NodePath("../../ButtonsRight/ModsButton")
+ text = "MENU_START"
+ align = 0
+@@ -267,6 +278,7 @@
+ align = 2
+ 
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/ContinueButton" to="." method="_on_ContinueButton_pressed"]
++[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/PortCreditLink" to="." method="_on_PortCreditLink_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/StartButton" to="." method="_on_StartButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/ItemSetButton" to="." method="_on_ItemSetButton_pressed"]
+ [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/ButtonsLeft/ProfileButton" to="." method="_on_ProfileButton_pressed"]

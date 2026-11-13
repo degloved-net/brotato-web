@@ -75,3 +75,5 @@ for preset in web web-threads web-lite web-lite-threads; do
     done
     echo "exported $output"
 done
+
+bash "$root/scripts/single-file.sh"
