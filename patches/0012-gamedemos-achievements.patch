@@ -1,0 +1,93 @@
+diff --git a/singletons/platforms/local.gd b/singletons/platforms/local.gd
+index c88d35a..184a77d 100644
+--- a/singletons/platforms/local.gd
++++ b/singletons/platforms/local.gd
+@@ -19,6 +19,8 @@ var dlc_store_urls: = {
+ 
+ func _ready() -> void :
+ 	print("local platform initialized")
++	if OS.get_name() == "HTML5":
++		var _ok: = _ensure_gdp_awards()
+ 
+ 
+ func get_type() -> int:
+@@ -37,8 +39,77 @@ func is_challenge_completed(_chal_id: String) -> bool:
+ 	return false
+ 
+ 
+-func complete_challenge(_chal_id: int) -> void :
+-	return
++const GDP_AWARDS_JS: = """
++(function () {
++	if (window.gdpAwards) { return true; }
++	var BASE = 'https://gamedemos.omgwow.tech/api/v1/awards';
++	var TICKET_RE = /^gdp_play_[A-Za-z0-9_-]{20,128}$/;
++	var KEY_RE = /^chal_[a-z0-9_-]{1,59}$/;
++	var ticket = new URLSearchParams(window.location.search).get('gdp_ticket') || '';
++	var usable = TICKET_RE.test(ticket);
++	var settled = {};
++	var queue = Promise.resolve();
++
++	if (usable) {
++		queue = queue.then(function () {
++			return fetch(BASE + '/session', {
++				method: 'POST',
++				headers: { 'Authorization': 'Bearer ' + ticket }
++			}).then(function (res) {
++				if (res.status === 401 || res.status === 403) {
++					usable = false;
++				}
++			}).catch(function () {});
++		});
++	}
++
++	function send(key) {
++		return fetch(BASE, {
++			method: 'POST',
++			headers: { 'Authorization': 'Bearer ' + ticket, 'Content-Type': 'application/json' },
++			body: JSON.stringify({ key: key })
++		}).then(function (res) {
++			if (res.status === 401) {
++				usable = false;
++			} else if (res.status !== 500 && res.status !== 502 && res.status !== 503 && res.status !== 504) {
++				settled[key] = true;
++			}
++		}).catch(function () {});
++	}
++
++	window.gdpAwards = {
++		report: function (key) {
++			if (!usable || settled[key] || !KEY_RE.test(key)) { return; }
++			queue = queue.then(function () {
++				return usable && !settled[key] ? send(key) : null;
++			});
++		}
++	};
++	return true;
++})()
++"""
++
++var _gdp_awards_ready: = false
++
++
++func _ensure_gdp_awards() -> bool:
++	if not _gdp_awards_ready:
++		_gdp_awards_ready = JavaScript.eval(GDP_AWARDS_JS, true) == true
++	return _gdp_awards_ready
++
++
++func complete_challenge(chal_id: int) -> void :
++	if OS.get_name() != "HTML5":
++		return
++
++	var challenge_key: String = Keys.hash_to_string.get(chal_id, "")
++	if challenge_key == "":
++		challenge_key = ChallengeService.hash_to_id.get(chal_id, "")
++	if challenge_key == "":
++		return
++
++	if _ensure_gdp_awards():
++		JavaScript.eval("window.gdpAwards.report(" + JSON.print(challenge_key) + ")", true)
+ 
+ 
+ func is_dlc_owned(dlc_my_id: String) -> bool:
